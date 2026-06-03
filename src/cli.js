@@ -4,6 +4,7 @@ import { doctor } from './commands/doctor.js';
 import { benchmark } from './commands/benchmark.js';
 import { init } from './commands/init.js';
 import { validate } from './commands/validate.js';
+import { runPipeline } from './core/pipeline.js';
 
 export function createCLI() {
   const program = new Command();
@@ -38,6 +39,15 @@ export function createCLI() {
     .option('--rule <text>', 'The rule text to test')
     .action(validate);
 
+  program
+    .command('review')
+    .description('Run the pre-commit review pipeline (called by the git hook)')
+    .action(async () => {
+      const exitCode = await runPipeline();
+      process.exit(exitCode);
+    });
+
   return program;
 }
+
 
