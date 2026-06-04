@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DASHBOARD_KEY=${DASHBOARD_KEY}
+    volumes:
+      - guardrails-data:/app/data
+
+volumes:
+  guardrails-data:
