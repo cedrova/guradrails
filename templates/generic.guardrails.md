@@ -1,8 +1,11 @@
-# Guardrails Rules — Generic
+# .guardrails.md — Generic (language-agnostic)
 
-[static:no-todo-comments]
-[static:no-debug-flag]
-[static:no-http-urls]
+## Static Rules
+# [static:no-todo-comments]  Do not commit code with TODO or FIXME comments.
+# [static:no-debug-flag]     Never set debug: true in committed code.
+# [static:no-http-urls]      Never hardcode http:// URLs (use environment variables).
 
-[llm] Never hardcode secrets, API keys, or passwords in source code.
-[llm] Never commit private keys, tokens, or credentials.
+## LLM Rules
+# [llm] Never hardcode secrets, API keys, or passwords.
+#        These must come from environment variables.
+# [llm] Never commit commented-out code blocks. Remove dead code instead.

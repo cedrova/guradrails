@@ -1,10 +1,15 @@
-# Guardrails Rules — React
+# .guardrails.md — React
 
-[static:no-console-log]
-[static:no-todo-comments]
-[static:no-debug-flag]
-[static:no-http-urls]
+## Static Rules
+# [static:no-todo-comments]  Do not commit code with TODO or FIXME comments.
+# [static:no-console-log]    Never use console.log — use the structured logger.
+# [static:no-debug-flag]     Never set debug: true in committed code.
 
-[llm] Never use dangerouslySetInnerHTML without sanitizing input first.
-[llm] Never hardcode secrets, API keys, or passwords in source code.
-[llm] Never store sensitive data in localStorage or sessionStorage.
+## LLM Rules
+# [llm] Never hardcode secrets, API keys, or passwords.
+#        These must come from environment variables.
+# [llm] Always provide a unique key prop when rendering lists with .map().
+# [llm] Always include a dependency array in useEffect calls.
+#        Missing dependencies cause infinite re-renders.
+# [llm] Never use dangerouslySetInnerHTML with user-provided content.
+# [llm] Always add alt attributes to img elements for accessibility.

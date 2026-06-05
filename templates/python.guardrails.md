@@ -1,9 +1,14 @@
-# Guardrails Rules — Python
+# .guardrails.md — Python
 
-[static:no-todo-comments]
-[static:no-debug-flag]
-[static:no-http-urls]
+## Static Rules
+# [static:no-todo-comments]  Do not commit code with TODO or FIXME comments.
+# [static:no-debug-flag]     Never set debug: true in committed code.
+# [static:no-http-urls]      Never hardcode http:// URLs (use environment variables).
 
-[llm] Never concatenate SQL strings — always use parameterized queries.
-[llm] Never hardcode secrets, API keys, or passwords in source code.
-[llm] Never use eval() or exec() with user-supplied input.
+## LLM Rules
+# [llm] Never construct SQL queries by string formatting or concatenation.
+#        Use parameterized queries with %s or ? placeholders.
+# [llm] Never hardcode secrets, API keys, or passwords.
+#        These must come from environment variables via os.environ.
+# [llm] Never use bare except clauses. Always catch specific exception types.
+# [llm] Always add type hints to function parameters and return values.
