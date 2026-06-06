@@ -1,9 +1,9 @@
 import { Command } from 'commander';
 import { install } from './commands/install.js';
 import { doctor } from './commands/doctor.js';
-import { benchmark } from './commands/benchmark.js';
 import { init } from './commands/init.js';
 import { validate } from './commands/validate.js';
+import { benchmark } from './commands/benchmark.js';
 import { runPipeline } from './core/pipeline.js';
 
 export function createCLI() {
@@ -24,11 +24,6 @@ export function createCLI() {
     .action(doctor);
 
   program
-    .command('benchmark')
-    .description('Benchmark installed Ollama models')
-    .action(benchmark);
-
-  program
     .command('init')
     .description('Initialize Guardrails in this project')
     .action(init);
@@ -40,8 +35,13 @@ export function createCLI() {
     .action(validate);
 
   program
+    .command('benchmark')
+    .description('Benchmark installed Ollama models')
+    .action(benchmark);
+
+  program
     .command('review')
-    .description('Run the pre-commit review pipeline (called by the git hook)')
+    .description('Run the pre-commit review (called by the git hook)')
     .action(async () => {
       const exitCode = await runPipeline();
       process.exit(exitCode);
@@ -49,5 +49,3 @@ export function createCLI() {
 
   return program;
 }
-
-
