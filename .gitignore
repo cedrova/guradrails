@@ -5,6 +5,5 @@ data/
 pending-session
 history.jsonl
 .DS_Store
-specv3.md
-specv2.md
-implementation_plan.md
+spec*.md
+implementation*.md
