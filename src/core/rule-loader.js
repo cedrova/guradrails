@@ -19,8 +19,11 @@ const CONFIG_REGEX = /^(\w[\w_]*)\s*:\s*(.+)$/;
 
 const DEFAULTS = {
   model: 'qwen2.5-coder:1.5b',
+  llm_provider: 'ollama',
+  llm_timeout: null,
   ollama_timeout: 20,
   bypass_lookback: 10,
+  privacy_mode: 'standard',
 };
 
 /**
@@ -125,7 +128,7 @@ export function loadConfig(content) {
     let value = match[2].trim();
 
     // Type coercion for known numeric keys
-    if (['ollama_timeout', 'bypass_lookback'].includes(key)) {
+    if (['ollama_timeout', 'llm_timeout', 'bypass_lookback'].includes(key)) {
       value = parseInt(value, 10);
       if (isNaN(value)) continue;
     }

@@ -100,6 +100,28 @@ describe('loadConfig', () => {
     assert.equal(config.model, 'qwen2.5-coder:1.5b');
     assert.equal(config.ollama_timeout, 20);
     assert.equal(config.bypass_lookback, 10);
-    assert.equal(config.privacy_mode, undefined);
+    assert.equal(config.privacy_mode, 'standard');
+  });
+
+  it('loadConfig defaults llm_provider to ollama', () => {
+    const config = loadConfig('');
+    assert.strictEqual(config.llm_provider, 'ollama');
+  });
+
+  it('loadConfig parses llm_provider from file', () => {
+    const raw = 'llm_provider: openai\nmodel: gpt-4o-mini';
+    const config = loadConfig(raw);
+    assert.strictEqual(config.llm_provider, 'openai');
+  });
+
+  it('loadConfig defaults llm_timeout to null', () => {
+    const config = loadConfig('');
+    assert.strictEqual(config.llm_timeout, null);
+  });
+
+  it('loadConfig parses llm_timeout as number', () => {
+    const raw = 'llm_timeout: 15';
+    const config = loadConfig(raw);
+    assert.strictEqual(config.llm_timeout, 15);
   });
 });
