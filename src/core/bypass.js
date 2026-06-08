@@ -1,24 +1,27 @@
 import { execSync } from 'node:child_process';
-import { existsSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
-import { homedir } from 'node:os';
 
 /**
- * Get the last N commits from git log.
- * Returns [{ hash, author, timestamp }].
+ * Returns the last N commits from git log.
+ * Each entry includes the commit's parent hash — used as a watermark
+ * for bypass detection. parentHash is null for the initial commit.
  */
 export function getRecentCommits(count = 10) {
   try {
-    const output = execSync(
-      `git log --format="%H|%ae|%aI" -n ${count}`,
-      { encoding: 'utf8' }
+    const out = execSync(
+      `git log --format="%H|%P|%ae|%aI" -n ${count}`,
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
     ).trim();
-
-    if (!output) return [];
-
-    return output.split('\n').map(line => {
-      const [hash, author, timestamp] = line.split('|');
-      return { hash, author, timestamp };
+    if (!out) return [];
+    return out.split('\n').map(line => {
+      const [hash, parents, author, timestamp] = line.split('|');
+      // %P returns all parent hashes space-separated; take the first for linear history
+      const parentHash = parents?.trim().split(' ')[0] || null;
+      return {
+        hash:       hash.trim(),
+        parentHash: parentHash || null,
+        author:     author.trim(),
+        timestamp:  timestamp.trim(),
+      };
     });
   } catch {
     return [];
@@ -26,57 +29,41 @@ export function getRecentCommits(count = 10) {
 }
 
 /**
- * Pure function: find which git commits are not in the known hashes set.
- * These are bypassed commits.
+ * Pure function: given an array of commits and the set of known parent hashes
+ * (from history.db sessions), return commits that were never reviewed.
+ *
+ * A commit C is bypassed when its parentHash is NOT in knownParentHashes.
+ * This works because a session records prev_hash = HEAD at review time,
+ * which equals the parent of the commit that was staged.
  */
-export function findBypassed(gitCommits, knownHashes) {
-  const known = new Set(knownHashes);
-  return gitCommits.filter(c => !known.has(c.hash));
+export function findBypassed(gitCommits, knownParentHashes) {
+  const known = new Set(knownParentHashes);
+  return gitCommits.filter(c =>
+    c.parentHash !== null &&        // skip initial commit (no parent)
+    !known.has(c.parentHash)        // no session recorded this as its prev_hash
+  );
 }
 
 /**
- * Full reconciliation: compare git log against the database,
- * mark any gaps as bypassed.
+ * Reconciles bypass state: compares recent git log against history.db sessions.
+ * Any commit whose parent hash is not recorded as a session's prev_hash is bypassed.
  *
- * Before comparing, check for a pending-session marker file.
- * If it exists, the most recent commit in git log was reviewed
- * by the previous pipeline run — backfill its real hash into the
- * DB as a reviewed (non-bypassed) commit, then delete the marker.
+ * Returns early with [] if no sessions exist yet (first install — nothing is bypassed).
+ * Called at the START of every pipeline run before diff extraction.
  */
 export async function reconcileBypasses(db, lookbackCount = 10) {
+  const sessions = db.getAllSessions();
+  if (sessions.length === 0) return []; // first use — no history yet, nothing is bypassed
+
   const gitCommits = getRecentCommits(lookbackCount);
   if (gitCommits.length === 0) return [];
 
-  // Backfill the last reviewed commit's real hash
-  _backfillPendingSession(db, gitCommits);
-
-  const knownHashes = db.getKnownHashes(gitCommits.map(c => c.hash));
-  const bypassed = findBypassed(gitCommits, knownHashes);
+  const knownParentHashes = db.getKnownParentHashes();
+  const bypassed = findBypassed(gitCommits, knownParentHashes);
 
   for (const commit of bypassed) {
     db.markBypassed(commit.hash, commit.author, commit.timestamp);
   }
 
   return bypassed;
-}
-
-/**
- * If a pending-session marker exists, the most recent commit in git log
- * was reviewed by our pipeline. Record its real hash as non-bypassed.
- */
-function _backfillPendingSession(db, gitCommits) {
-  try {
-    const markerPath = join(homedir(), '.guardrails', 'pending-session');
-    if (existsSync(markerPath)) {
-      // The most recent commit is the one that was just created
-      // after our last successful review (exit 0)
-      const lastCommit = gitCommits[0];
-      if (lastCommit) {
-        db.insertCommit(lastCommit.hash, lastCommit.author, lastCommit.timestamp);
-      }
-      unlinkSync(markerPath);
-    }
-  } catch {
-    // Non-blocking — if marker read fails, worst case is a false bypass
-  }
 }
