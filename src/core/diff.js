@@ -76,3 +76,19 @@ export function getStagedDiff() {
 }
 
 export { WARN_THRESHOLD, SPLIT_THRESHOLD };
+
+/**
+ * CI mode diff extractor.
+ * Uses GITHUB_BASE_SHA..GITHUB_SHA when running in GitHub Actions.
+ * Falls back to HEAD~1..HEAD for local --ci testing.
+ */
+export function getCIDiff() {
+  const base = process.env.GITHUB_BASE_SHA;
+  const head = process.env.GITHUB_SHA;
+  try {
+    const range = (base && head) ? `${base}..${head}` : 'HEAD~1..HEAD';
+    return execSync(`git diff ${range}`, { encoding: 'utf8' });
+  } catch (e) {
+    throw new Error(`Failed to get CI diff: ${e.message}`);
+  }
+}

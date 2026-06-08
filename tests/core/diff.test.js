@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test';
+import { describe, it, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { estimateTokens, splitDiffByFile, getDiffWarning } from '../../src/core/diff.js';
 
@@ -52,4 +52,12 @@ describe('splitDiffByFile', () => {
   it('returns empty array for empty diff', () => {
     assert.deepEqual(splitDiffByFile(''), []);
   });
+});
+
+test('getCIDiff is exported as a function', async () => {
+  // getCIDiff wraps execSync with a range derived from env vars.
+  // The function itself cannot be meaningfully unit-tested without a git repo,
+  // but we verify it is exported correctly before using it in the pipeline.
+  const { getCIDiff } = await import('../../src/core/diff.js');
+  assert.strictEqual(typeof getCIDiff, 'function');
 });
