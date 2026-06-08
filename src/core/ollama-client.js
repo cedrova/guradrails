@@ -168,3 +168,24 @@ export async function pullModel(model, baseUrl = DEFAULT_BASE_URL) {
 
   process.stdout.write('\n');
 }
+
+// ─── Provider class (v4 addition) ────────────────────────────────────────────
+
+export class OllamaProvider {
+  constructor(config) {
+    this._model  = config.model || 'qwen2.5-coder:1.5b';
+    this._timeout = (config.llm_timeout || config.ollama_timeout || 20) * 1000;
+  }
+
+  async isAvailable() {
+    const health = await checkOllamaHealth();
+    return { ok: health.ok, error: health.ok ? null : health.error };
+  }
+
+  async generate(prompt, options = {}) {
+    return generate(prompt, this._model, {
+      timeoutMs: this._timeout,
+      ...options,
+    });
+  }
+}
