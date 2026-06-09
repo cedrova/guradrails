@@ -1,6 +1,9 @@
 import { writeFileSync, chmodSync, existsSync, mkdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join } from 'node:path';
+import { HistoryDB }    from '../core/history-db.js';
+import { statusLine }   from '../core/ui.js';
+import pc               from 'picocolors';
 
 const HOOK_SCRIPT = `#!/bin/sh
 # Guardrails pre-commit hook — installed by: guardrails install
@@ -44,6 +47,13 @@ export async function install() {
     // chmod may fail on Windows — not a problem
   }
 
-  console.log(`✓ Pre-commit hook installed at ${hookPath}`);
-  console.log('  Every commit will now be reviewed by Guardrails.');
+  try {
+    const db = new HistoryDB();
+    db.close();
+    console.log(statusLine('ok', 'History database', `~/.guardrails/history.db`));
+  } catch (e) {
+    console.log(statusLine('warn', 'History database', `could not create: ${e.message}`));
+  }
+
+  console.log(`\n${pc.green('✓')} Guardrails installed. It will run on every git commit.\n`);
 }
