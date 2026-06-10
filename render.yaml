@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: guardrails-dashboard
+    runtime: node
+    buildCommand: npm install
+    startCommand: node src/dashboard/server.js
+    envVars:
+      - key: DASHBOARD_KEY
+        sync: false          # set manually in Render dashboard — never committed
+      - key: DATA_DIR
+        value: /opt/render/project/data
+    disk:
+      name: guardrails-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
