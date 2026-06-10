@@ -1,0 +1,35 @@
+# Copy this file to YOUR repository at .github/workflows/guardrails.yml
+# It runs Guardrails on every pull request and posts a comment if violations are found.
+#
+# Prerequisites:
+#   1. A .guardrails.md file in your repo root (run: guardrails init)
+#   2. llm_provider in .guardrails.md set to 'openai' or 'anthropic' (not 'ollama' — no local Ollama in CI)
+#   3. The appropriate API key added as a GitHub Repository Secret
+
+name: Guardrails Code Review
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write   # required to post PR comments
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # full history needed for accurate diff
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: cedrova/guradrails@v1
+        with:
+          github_token:      ${{ secrets.GITHUB_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # or: openai_api_key: ${{ secrets.OPENAI_API_KEY }}

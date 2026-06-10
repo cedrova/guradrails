@@ -1,0 +1,35 @@
+name: 'Guardrails Code Review'
+description: 'Local-first AI code review that enforces your .guardrails.md rules on every PR'
+author: 'guardrails'
+
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  github_token:
+    description: 'GitHub token for posting PR comments (use secrets.GITHUB_TOKEN)'
+    required: true
+  openai_api_key:
+    description: 'OpenAI API key. Required if llm_provider is openai in .guardrails.md'
+    required: false
+    default: ''
+  anthropic_api_key:
+    description: 'Anthropic API key. Required if llm_provider is anthropic in .guardrails.md'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Guardrails CLI
+      shell: bash
+      run: npm install -g guardrails-cli
+
+    - name: Run Guardrails Review
+      shell: bash
+      env:
+        GITHUB_TOKEN:         ${{ inputs.github_token }}
+        OPENAI_API_KEY:       ${{ inputs.openai_api_key }}
+        ANTHROPIC_API_KEY:    ${{ inputs.anthropic_api_key }}
+      run: guardrails review --ci
