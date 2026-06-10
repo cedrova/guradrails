@@ -4,6 +4,7 @@ import { doctor } from './commands/doctor.js';
 import { init } from './commands/init.js';
 import { validate } from './commands/validate.js';
 import { benchmark } from './commands/benchmark.js';
+import { dashboard } from './commands/dashboard.js';
 import { runPipeline } from './core/pipeline.js';
 
 export function createCLI() {
@@ -42,10 +43,17 @@ export function createCLI() {
   program
     .command('review')
     .description('Run the pre-commit review (called by the git hook)')
-    .action(async () => {
-      const exitCode = await runPipeline();
+    .option('--ci', 'CI mode: diff from git, post PR comment on violations')
+    .action(async (options) => {
+      const exitCode = await runPipeline({ ci: !!options.ci });
       process.exit(exitCode);
     });
+
+  program
+    .command('dashboard')
+    .description('Start the local dashboard server and view your commit history')
+    .option('-p, --port <number>', 'Port to listen on', '3000')
+    .action((options) => dashboard({ port: parseInt(options.port, 10) }));
 
   return program;
 }
